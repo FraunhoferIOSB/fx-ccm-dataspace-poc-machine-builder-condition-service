@@ -6,6 +6,7 @@ import base64
 
 
 
+
 # --- EDC Configuration ---
 # extract the correct data offer from the received catalog
 def get_data_offer(catalog_agreements):
@@ -57,6 +58,47 @@ def offer2et(offer, edc_ccb, header_cpc):
     et_dict  = {'endpoint': endpoint, 'token': tx_auth}
 
     return 0, et_dict
+
+
+
+# --- Processing ---
+def get_data_er(assetId, header_control_plane, url_edc_consumer_control_plane_base):   # get data endpoint reference (+token)
+    """
+    Oututs:
+        status
+        error info XOR et_dict
+
+    """
+    agreement_body = {
+        "@context": {
+            "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        },
+        "@type": "QuerySpec",
+        "filterExpression": [
+            {
+                "operandLeft": "assetId",
+                "operator": "=",
+                "operandRight": assetId,
+            }
+        ]
+    }
+    # query the edrs:
+    res_catalog_agreement = requests.post(url=url_edc_consumer_control_plane_base + '/management/v2/edrs/request', headers=header_control_plane, json=agreement_body)
+    
+    res_offer, offer = get_data_offer(res_catalog_agreement.json())
+    str_offer_status = "Status Offer: "+ str(res_offer)
+
+    if res_offer != 0:
+        return res_offer, str_offer_status
+
+    # obtain the necessary data from the dictionary
+    res_et, et_dict = offer2et(offer, url_edc_consumer_control_plane_base, header_control_plane)
+    if res_et == -2:
+        return res_et, "Token Request Failed:" + str(et_dict)
+    elif res_et != 0:
+        return res_et, "Unknown error"
+    
+    return res_et, et_dict
 
 
 # --- EDR Negotiations ---
