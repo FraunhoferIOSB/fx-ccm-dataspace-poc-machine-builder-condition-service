@@ -5,7 +5,7 @@ import requests
 import uuid     # in python
 import base64   # in python
 import copy     # in python
-import yaml     # MIT
+import os       # MIT
 
 from enum import Enum   # in python
 from typing import Annotated
@@ -26,18 +26,16 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
                         logging.FileHandler('example.log'),
                     ])#filename='example.log')
 
-# obtain config:
-with open('consumer_cfg.yaml', 'r') as file:
-    consumer_cfg = yaml.safe_load(file)
-
 # - control plane -
-url_edc_consumer_control_plane_base = consumer_cfg['consumer-edc-control-plane']['endpoint']
-header_control_plane = consumer_cfg['consumer-edc-control-plane']['header'] # this contains secrets, so please use -at least- a secretsmanager instead
+url_edc_consumer_control_plane_base = os.getenv('ENDPOINT')
+header_control_plane = {
+    'Content-Type': 'application/json',
+    'x-api-key': os.getenv('XAPIKEY')
+}
 
 # - "identities" -
-edc_provider_bpn = consumer_cfg['trusted-providers']['Facotry_Operator_A']['BPN']  # "{{EDCTX-10-1-BPN}}"
-url_edc_provider_control_plane_base = consumer_cfg['trusted-providers']['Facotry_Operator_A']['endpoint-control-plane']
-
+edc_provider_bpn = os.getenv('BPN')
+url_edc_provider_control_plane_base = os.getenv('ENDPOINTCONTROLPLANE')
 
 class allowed_asset_types(str, Enum):
     Submodel = "Submodel"
@@ -50,9 +48,6 @@ class allowed_asset_types(str, Enum):
 async def root():
     return "Machine Builder Condition Service [PoC TP2.04 & TP4.1]"
 
-@app.get("/config")     # REMOVE THIS BECAUSE YOU CAN ACCESS SECRETS!!!
-async def get_condig():
-    return consumer_cfg
 
 
 # obtain/view available offers

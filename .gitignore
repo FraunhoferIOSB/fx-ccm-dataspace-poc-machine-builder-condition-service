@@ -1,6 +1,15 @@
 # Compiled class file
 *.class
 
+# Ignore Gradle build output directory
+build
+
+.idea
+.vs
+.vscode
+
+/secrets
+
 # Log file
 *.log
 
